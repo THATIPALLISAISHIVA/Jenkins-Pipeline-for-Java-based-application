@@ -45,7 +45,6 @@ pipeline {
     stage('Update Deployment File') {
       steps {
         script {
-          // Re-checkout to ensure we're in a git repository
           checkout scm
           
           withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
