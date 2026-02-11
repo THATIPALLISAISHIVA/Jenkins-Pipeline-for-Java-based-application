@@ -1,1 +1,0 @@
-# Jenkins-Pipeline-for-Java-based-application
