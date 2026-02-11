@@ -43,20 +43,20 @@ pipeline {
       }
     }
     stage('Update Deployment File') {
+      environment {
+        GIT_REPO_NAME = "Jenkins-Pipeline-for-Java-based-application"
+        GIT_USER_NAME = "THATIPALLISAISHIVA"
+      }
       steps {
-        script {
-          checkout scm
-          
-          withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-            sh """
-              git config user.email "saishivathatipalli@gmail.com"
-              git config user.name "THATIPALLISAISHIVA"
-              sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
-              git add spring-boot-app-manifests/deployment.yml
-              git commit -m "Update deployment image to version ${BUILD_NUMBER}" || true
-              git push https://${GITHUB_TOKEN}@github.com/THATIPALLISAISHIVA/Jenkins-Pipeline-for-Java-based-application.git HEAD:main
-            """
-          }
+        withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+          sh '''
+            git config user.email "saishivathatipalli@gmail.com"
+            git config user.name "THATIPALLISAISHIVA"
+            sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
+            git add spring-boot-app-manifests/deployment.yml
+            git commit -m "Update deployment image to version ${BUILD_NUMBER}" || true
+            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
+          '''
         }
       }
     }
