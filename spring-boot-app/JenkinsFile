@@ -1,10 +1,10 @@
 pipeline {
   agent {
-    docker {
-      image 'saishivathatipalli/maven-docker-jdk17'
-      args '--network=host --user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
-    }
+  docker {
+    image 'saishivathatipalli/maven-docker-jdk17'
+    args '--network=host --user root -v /var/run/docker.sock:/var/run/docker.sock -v /root/.m2:/root/.m2'
   }
+}
   stages {
     stage('Checkout') {
       steps {
