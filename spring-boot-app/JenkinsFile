@@ -50,12 +50,20 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
           sh '''
-            cd ${WORKSPACE}
+            # Check if .git directory exists
+            if [ ! -d ".git" ]; then
+              echo "Not in a git repository, re-initializing..."
+              git init
+              git remote add origin https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
+              git fetch origin
+              git checkout -b main origin/main || git checkout main
+            fi
+            
             git config user.email "saishivathatipalli@gmail.com"
             git config user.name "THATIPALLISAISHIVA"
             sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
             git add spring-boot-app-manifests/deployment.yml
-            git commit -m "Update deployment image to version ${BUILD_NUMBER}" || true
+            git diff --cached --quiet || git commit -m "Update deployment image to version ${BUILD_NUMBER}"
             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
           '''
         }
