@@ -11,7 +11,6 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        // do an explicit checkout so the workspace contains the repo
         checkout scm
       }
     }
@@ -49,53 +48,18 @@ pipeline {
         GIT_USER_NAME = "THATIPALLISAISHIVA"
       }
       steps {
-        // Use the github token to ensure we have a git repo in the workspace and can push
         withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-          dir("${env.WORKSPACE}") {
-            sh '''
-              set -e
-
-              echo "Workspace: $(pwd)"
-              echo "Listing workspace contents before changes:" 
-              ls -la || true
-
-              # Ensure git is available; if not, try to install (image runs as root because of --user root)
-              if ! command -v git >/dev/null 2>&1; then
-                echo "git not found — attempting to install (apt-get)..."
-                if [ -f /etc/debian_version ]; then
-                  apt-get update && apt-get install -y git
-                else
-                  echo "Package manager not found — git required to run git commands.\nYou can either add git to your docker image or use the GitHub API fallback approach."
-                fi
-              fi
-
-              # If .git is missing (sometimes checkout happens outside container), clone the repo here using the token
-              if [ ! -d .git ]; then
-                echo ".git missing in workspace — cloning repo into workspace using token"
-                # remove files (be careful) then clone
-                rm -rf ./* || true
-                git clone https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git .
-              fi
-
-              git config user.email "saishivathatipalli@gmail.com"
-              git config user.name "THATIPALLISAISHIVA"
-
-              # Update the deployment file
-              if [ -f spring-boot-app-manifests/deployment.yml ]; then
-                sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
-                git add spring-boot-app-manifests/deployment.yml
-                git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
-                git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
-              else
-                echo "ERROR: deployment.yml not found at spring-boot-app-manifests/deployment.yml"
-                ls -la spring-boot-app-manifests || true
-                exit 1
-              fi
-            '''
-          }
+          sh '''
+            cd ${WORKSPACE}
+            git config user.email "saishivathatipalli@gmail.com"
+            git config user.name "THATIPALLISAISHIVA"
+            sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
+            git add spring-boot-app-manifests/deployment.yml
+            git commit -m "Update deployment image to version ${BUILD_NUMBER}" || true
+            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
+          '''
         }
       }
     }
   }
 }
-
